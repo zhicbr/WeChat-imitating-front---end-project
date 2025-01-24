@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:my_first_app/widgets/message_bubble.dart';
 import 'package:my_first_app/routes/app_routes.dart';
 import 'package:my_first_app/models/message.dart';
+import 'package:my_first_app/models/contact.dart';
+import 'package:my_first_app/features/me/me_page.dart';
 
 void main() => runApp(WeChatApp());
 
@@ -31,7 +34,7 @@ class _MainScreenState extends State<MainScreen> {
     ChatListPage(),
     ContactPage(),
     DiscoverPage(),
-    ProfilePage(),
+    MePage(),
   ];
 
   @override
@@ -67,8 +70,13 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-class ChatListPage extends StatelessWidget {
-  final List<Chat> chats = [
+class ChatListPage extends StatefulWidget {
+  @override
+  _ChatListPageState createState() => _ChatListPageState();
+}
+
+class _ChatListPageState extends State<ChatListPage> {
+  List<Chat> chats = [
     Chat(
       name: '张三',
       messages: [
@@ -165,78 +173,14 @@ class ChatListPage extends StatelessWidget {
         ),
       ],
     ),
-    Chat(
-      name: '李四',
-      messages: List.generate(20, (index) => Message(
-        id: '${index + 21}',
-        senderId: index.isEven ? 'user1' : 'user3',
-        receiverId: index.isEven ? 'user3' : 'user1',
-        content: _generateMessageContent(index),
-        timestamp: DateTime.now().subtract(Duration(hours: 20 - index)),
-      )),
-    ),
-    Chat(
-      name: '工作群',
-      messages: List.generate(20, (index) => Message(
-        id: '${index + 41}',
-        senderId: index.isEven ? 'user1' : 'user4',
-        receiverId: 'group1',
-        content: _generateWorkMessageContent(index),
-        timestamp: DateTime.now().subtract(Duration(days: 20 - index)),
-      )),
-    ),
   ];
 
-  static String _generateMessageContent(int index) {
-    final messages = [
-      '你好呀！',
-      '最近怎么样？',
-      '周末有空吗？',
-      '要不要一起吃饭？',
-      '我找到一家不错的餐厅',
-      '好啊，什么时候？',
-      '周六晚上7点怎么样？',
-      '可以，我记下了',
-      '别忘了带伞，可能会下雨',
-      '好的，谢谢提醒',
-      '你到哪了？',
-      '马上到，5分钟',
-      '我看到你了',
-      '这边这边！',
-      '今天玩得真开心',
-      '是啊，下次再约',
-      '晚安',
-      '早点休息',
-      '明天见',
-      '👋'
-    ];
-    return messages[index % messages.length];
-  }
-
-  static String _generateWorkMessageContent(int index) {
-    final messages = [
-      '项目文档已更新',
-      '收到，谢谢通知',
-      '新版本什么时候发布？',
-      '预计周五发布',
-      '需要我准备发布说明吗？',
-      '是的，麻烦准备一下',
-      '好的，明天上午发给你',
-      '测试环境准备好了吗？',
-      '已经准备好了',
-      '好的，那我开始测试',
-      '发现了一个bug',
-      '具体是什么问题？',
-      '页面加载时崩溃',
-      '我看看日志',
-      '找到了，是空指针异常',
-      '修复好了，重新部署一下',
-      '部署完成',
-      '测试通过',
-      '可以发布了',
-      '发布成功'
-    ];
-    return messages[index % messages.length];
+  void addChat(Chat newChat) {
+    setState(() {
+      if (!chats.any((chat) => chat.name == newChat.name)) {
+        chats.add(newChat);
+      }
+    });
   }
 
   @override
@@ -334,9 +278,53 @@ class Chat {
   }
 }
 
-class ContactPage extends StatelessWidget {
-  final List<String> contacts = [
-    '张三', '李四', '王五', '赵六', '陈七'
+class ContactPage extends StatefulWidget {
+  @override
+  _ContactPageState createState() => _ContactPageState();
+}
+
+class _ContactPageState extends State<ContactPage> {
+  final List<Contact> contacts = [
+    Contact(
+      id: '1',
+      name: '张三',
+      phone: '13800138000',
+      email: 'zhangsan@example.com',
+      avatarUrl: 'https://placekitten.com/200/200',
+      description: '好友',
+    ),
+    Contact(
+      id: '2',
+      name: '李四',
+      phone: '13800138001',
+      email: 'lisi@example.com',
+      avatarUrl: 'https://placekitten.com/201/201',
+      description: '同事',
+    ),
+    Contact(
+      id: '3',
+      name: '王五',
+      phone: '13800138002',
+      email: 'wangwu@example.com',
+      avatarUrl: 'https://placekitten.com/202/202',
+      description: '同学',
+    ),
+    Contact(
+      id: '4',
+      name: '赵六',
+      phone: '13800138003',
+      email: 'zhaoliu@example.com',
+      avatarUrl: 'https://placekitten.com/203/203',
+      description: '家人',
+    ),
+    Contact(
+      id: '5',
+      name: '陈七',
+      phone: '13800138004',
+      email: 'chenqi@example.com',
+      avatarUrl: 'https://placekitten.com/204/204',
+      description: '朋友',
+    ),
   ];
 
   @override
@@ -361,11 +349,123 @@ class ContactPage extends StatelessWidget {
           ),
           ...contacts.map((contact) => ListTile(
             leading: CircleAvatar(
-              backgroundImage: NetworkImage('https://placekitten.com/50/50'),
+              backgroundImage: NetworkImage(contact.avatarUrl),
             ),
-            title: Text(contact),
+            title: Text(contact.name),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ContactDetailPage(
+                    contact: contact,
+                    onMessage: (contact) {
+                      final chatListState = context.findAncestorStateOfType<_ChatListPageState>();
+                      chatListState?.addChat(Chat(
+                        name: contact.name,
+                        messages: [],
+                        avatarUrl: contact.avatarUrl,
+                      ));
+                      Navigator.of(context).pushNamed(
+                        AppRoutes.chatDetail,
+                        arguments: {
+                          'contactName': contact.name,
+                          'messages': [],
+                        },
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
           )),
         ],
+      ),
+    );
+  }
+}
+
+class ContactDetailPage extends StatelessWidget {
+  final Contact contact;
+  final Function(Contact)? onMessage;
+
+  const ContactDetailPage({
+    Key? key,
+    required this.contact,
+    this.onMessage,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('联系人详情'),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(height: 20),
+            CircleAvatar(
+              radius: 80,
+              backgroundImage: NetworkImage(contact.avatarUrl),
+            ),
+            SizedBox(height: 20),
+            Text(
+              contact.name,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 10),
+            if (contact.phone != null)
+              Text(
+                contact.phone!,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey[600],
+                ),
+              ),
+            SizedBox(height: 20),
+            Divider(),
+            if (contact.email != null)
+              ListTile(
+                leading: Icon(Icons.email),
+                title: Text(contact.email!),
+              ),
+            if (contact.description != null)
+              ListTile(
+                leading: Icon(Icons.info_outline),
+                title: Text(contact.description!),
+              ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    onMessage?.call(contact);
+                  },
+                  icon: Icon(Icons.message),
+                  label: Text('发消息'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final Uri phoneUri = Uri(scheme: 'tel', path: contact.phone);
+                    if (await canLaunchUrl(phoneUri)) {
+                      await launchUrl(phoneUri);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('无法拨打电话')),
+                      );
+                    }
+                  },
+                  icon: Icon(Icons.call),
+                  label: Text('拨打电话'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -399,50 +499,6 @@ class DiscoverPage extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.games, color: Colors.green),
             title: Text('游戏'),
-            trailing: Icon(Icons.chevron_right),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ProfilePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('我')),
-      body: ListView(
-        children: [
-          ListTile(
-            leading: CircleAvatar(
-              radius: 30,
-              backgroundImage: NetworkImage('https://placekitten.com/100/100'),
-            ),
-            title: Text('用户名'),
-            subtitle: Text('微信号: user123'),
-            trailing: Icon(Icons.qr_code),
-          ),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.wallet, color: Colors.green),
-            title: Text('支付'),
-            trailing: Icon(Icons.chevron_right),
-          ),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.collections, color: Colors.green),
-            title: Text('收藏'),
-            trailing: Icon(Icons.chevron_right),
-          ),
-          ListTile(
-            leading: Icon(Icons.photo_album, color: Colors.green),
-            title: Text('相册'),
-            trailing: Icon(Icons.chevron_right),
-          ),
-          ListTile(
-            leading: Icon(Icons.settings, color: Colors.green),
-            title: Text('设置'),
             trailing: Icon(Icons.chevron_right),
           ),
         ],

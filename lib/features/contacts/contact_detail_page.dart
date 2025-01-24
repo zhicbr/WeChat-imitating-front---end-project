@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:my_first_app/models/contact.dart';
+import 'package:my_first_app/models/message.dart';
+import 'package:my_first_app/routes/app_routes.dart';
 
 class ContactDetailPage extends StatelessWidget {
   final Contact contact;
 
-  const ContactDetailPage({required this.contact});
+  const ContactDetailPage({Key? key, required this.contact}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -12,40 +15,77 @@ class ContactDetailPage extends StatelessWidget {
       appBar: AppBar(
         title: Text('联系人详情'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Center(
-              child: CircleAvatar(
-                backgroundImage: NetworkImage(contact.avatarUrl),
-                radius: 50,
-              ),
+            SizedBox(height: 20),
+            CircleAvatar(
+              radius: 80,
+              backgroundImage: NetworkImage(contact.avatarUrl),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 20),
             Text(
-              '姓名: ${contact.name}',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            if (contact.description != null)
-              Text(
-                '描述: ${contact.description}',
-                style: TextStyle(fontSize: 16),
+              contact.name,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
               ),
-            SizedBox(height: 8),
+            ),
+            SizedBox(height: 10),
             if (contact.phone != null)
               Text(
-                '电话: ${contact.phone}',
-                style: TextStyle(fontSize: 16),
+                contact.phone!,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey[600],
+                ),
               ),
-            SizedBox(height: 8),
+            SizedBox(height: 20),
+            Divider(),
             if (contact.email != null)
-              Text(
-                '邮箱: ${contact.email}',
-                style: TextStyle(fontSize: 16),
+              ListTile(
+                leading: Icon(Icons.email),
+                title: Text(contact.email!),
               ),
+            if (contact.description != null)
+              ListTile(
+                leading: Icon(Icons.info_outline),
+                title: Text(contact.description!),
+              ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed(
+                      AppRoutes.chatDetail,
+                      arguments: {
+                        'contactName': contact.name,
+                        'messages': <Message>[],
+                      },
+                    );
+                  },
+                  icon: Icon(Icons.message),
+                  label: Text('发消息'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final Uri phoneUri = Uri(scheme: 'tel', path: contact.phone);
+                    if (await canLaunchUrl(phoneUri)) {
+                      await launchUrl(phoneUri);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('无法拨打电话')),
+                      );
+                    }
+                  },
+                  icon: Icon(Icons.call),
+                  label: Text('拨打电话'),
+                ),
+              ],
+            ),
           ],
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_first_app/routes/app_routes.dart';
+import 'settings_page.dart'; // 添加这一行
 import 'package:my_first_app/services/profile_service.dart';
 
 class MePage extends StatelessWidget {
@@ -63,7 +64,10 @@ class MePage extends StatelessWidget {
             title: Text('设置'),
             trailing: Icon(Icons.chevron_right),
             onTap: () {
-              // TODO: 导航到设置页面
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SettingsPage()), // 导航到设置页面
+              );
             },
           ),
         ],
